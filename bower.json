@@ -1,0 +1,25 @@
+{
+  "name": "@webantic/datepicker",
+  "description": "A simple datepicker library",
+  "main": "index.js",
+  "authors": [
+    "Calvin Evans <calvin@webantic.co.uk> (http://webantic.co.uk/)"
+  ],
+  "license": "Apache-2.0",
+  "keywords": [
+    "datepicker",
+    "dates",
+    "ui"
+  ],
+  "homepage": "https://github.com/webantic/webantic-datepicker",
+  "moduleType": [
+    "node"
+  ],
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
