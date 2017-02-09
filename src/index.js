@@ -25,17 +25,16 @@ class Datepicker {
     self.config.input = input
     self.config.root = self._createRoot(input)
 
-    // initial state
-    let state = {
-      current: self._cleanDate(input.value),
-      value: moment(self._cleanDate(input.value)).toDate()
-    }
-
-    // mount component
-    const component = self._initComponent(state)
-
     // set up show listener
-    input.addEventListener('focus', function renderDatePicker () {
+    input.addEventListener('focus', function renderDatePicker (e) {
+      // initial state
+      let value = e.target._date ? self._cleanDate(e.target._date) : self._cleanDate(e.target.value)
+      let state = {
+        current: value,
+        value: value
+      }
+      // mount component
+      const component = self._initComponent(state)
       m.mount(self.config.root, component)
     })
     input.addEventListener('click', self._stopPropagation)
@@ -47,6 +46,7 @@ class Datepicker {
       const newValue = moment(vnode.state.current).date(date)
       self.config.input.value = newValue.format(self.config.format)
       vnode.state.value = newValue.toDate()
+      self.config.input._date = newValue.toDate()
     }
   }
 
@@ -150,16 +150,32 @@ class Datepicker {
     const self = this
     return {
       state,
+      oninit(vnode) {
+        vnode.state.current = state.current
+        vnode.state.value = state.value
+      },
       oncreate(vnode) {
         const inputPosition = self.config.input.getBoundingClientRect()
         const bodyPosition = document.body.getBoundingClientRect()
+        const top = bodyPosition.top - inputPosition.top
+        const left = bodyPosition.left - inputPosition.left
+        const right = bodyPosition.right - inputPosition.right
+        const bottom = bodyPosition.bottom - inputPosition.bottom
+
         vnode.dom.style.position = 'fixed'
-        vnode.dom.style.top = ((inputPosition.bottom - bodyPosition.bottom) + self.config.input.clientHeight) + 'px'
-        if (inputPosition.left > inputPosition.right) {
-          vnode.dom.style.right = (inputPosition.right - bodyPosition.right) + 'px'
+
+        if (inputPosition.left < self.config.input.clientWidth) {
+          vnode.dom.style.left = left + 'px'
         } else {
-          vnode.dom.style.left = (inputPosition.left - bodyPosition.left) + 'px'
+          vnode.dom.style.right = right + 'px'
         }
+
+        if (inputPosition.bottom < self.config.input.clientHeight) {
+          vnode.dom.style.bottom = top + 'px'
+        } else {
+          vnode.dom.style.top = bottom + 'px'
+        }
+        
         const hide = document.addEventListener('click', self.hide(self, hide))
       },
       view(vnode) {

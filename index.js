@@ -35,17 +35,16 @@ var Datepicker = function () {
     self.config.input = input;
     self.config.root = self._createRoot(input);
 
-    // initial state
-    var state = {
-      current: self._cleanDate(input.value),
-      value: moment(self._cleanDate(input.value)).toDate()
-    };
-
-    // mount component
-    var component = self._initComponent(state);
-
     // set up show listener
-    input.addEventListener('focus', function renderDatePicker() {
+    input.addEventListener('focus', function renderDatePicker(e) {
+      // initial state
+      var value = e.target._date ? self._cleanDate(e.target._date) : self._cleanDate(e.target.value);
+      var state = {
+        current: value,
+        value: value
+      };
+      // mount component
+      var component = self._initComponent(state);
       m.mount(self.config.root, component);
     });
     input.addEventListener('click', self._stopPropagation);
@@ -59,6 +58,7 @@ var Datepicker = function () {
         var newValue = moment(vnode.state.current).date(date);
         self.config.input.value = newValue.format(self.config.format);
         vnode.state.value = newValue.toDate();
+        self.config.input._date = newValue.toDate();
       };
     }
   }, {
@@ -182,16 +182,32 @@ var Datepicker = function () {
       var self = this;
       return {
         state: state,
+        oninit: function oninit(vnode) {
+          vnode.state.current = state.current;
+          vnode.state.value = state.value;
+        },
         oncreate: function oncreate(vnode) {
           var inputPosition = self.config.input.getBoundingClientRect();
           var bodyPosition = document.body.getBoundingClientRect();
+          var top = bodyPosition.top - inputPosition.top;
+          var left = bodyPosition.left - inputPosition.left;
+          var right = bodyPosition.right - inputPosition.right;
+          var bottom = bodyPosition.bottom - inputPosition.bottom;
+
           vnode.dom.style.position = 'fixed';
-          vnode.dom.style.top = inputPosition.bottom - bodyPosition.bottom + self.config.input.clientHeight + 'px';
-          if (inputPosition.left > inputPosition.right) {
-            vnode.dom.style.right = inputPosition.right - bodyPosition.right + 'px';
+
+          if (inputPosition.left < self.config.input.clientWidth) {
+            vnode.dom.style.left = left + 'px';
           } else {
-            vnode.dom.style.left = inputPosition.left - bodyPosition.left + 'px';
+            vnode.dom.style.right = right + 'px';
           }
+
+          if (inputPosition.bottom < self.config.input.clientHeight) {
+            vnode.dom.style.bottom = top + 'px';
+          } else {
+            vnode.dom.style.top = bottom + 'px';
+          }
+
           var hide = document.addEventListener('click', self.hide(self, hide));
         },
         view: function view(vnode) {
