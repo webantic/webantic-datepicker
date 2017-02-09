@@ -2,13 +2,13 @@
 
 A lightweight, no-css datepicker library. 
 
-Markup generated is super-minimal and confirms to [RSCSS](http://rscss.io) guidelines.
+Markup generated is super-minimal and confirms to [RSCSS](http://rscss.io) guidelines for easy styling.
 
-####Usage
+###Usage
 
-install with `npm i --save @webantic/datepicker`
+Install with `npm i --save @webantic/datepicker`
 
-require (use something like [browserify](http://browserify.org/)) and use as follows:
+Just require (use something like [browserify](http://browserify.org/)), give it a text input element and you're good to go.
 
 ```javascript
    var Datepicker = require('@webantic/datepicker')
@@ -31,7 +31,7 @@ Don't ask why I picked these ones to support because I have no idea ¯\\\_(ツ)\
 **format**: the [momentjs](https://momentjs.com/docs/#/displaying/format/) format for displaying the value in the input (default `DD/MM/YYYY`)
 
 
-####Methods
+###Methods
 
 `hide()` hides the picker
 
