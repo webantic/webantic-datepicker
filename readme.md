@@ -1,10 +1,10 @@
-##Webantic Datepicker
+## Webantic Datepicker
 
 A lightweight, no-css datepicker library. 
 
 Markup generated is super-minimal and confirms to [RSCSS](http://rscss.io) guidelines for easy styling.
 
-###Usage
+### Usage
 
 Install with `npm i --save @webantic/datepicker`
 
@@ -31,7 +31,7 @@ Don't ask why I picked these ones to support because I have no idea ¯\\\_(ツ)\
 **format**: the [momentjs](https://momentjs.com/docs/#/displaying/format/) format for displaying the value in the input (default `DD/MM/YYYY`)
 
 
-###Methods
+### Methods
 
 `hide()` hides the picker
 
