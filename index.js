@@ -27,7 +27,8 @@ var Datepicker = function () {
     // default config
     self.config = {
       format: 'DD/MM/YYYY',
-      locale: 'en-gb'
+      locale: 'en-gb',
+      position: 'fixed'
     };
     // update config
     Object.assign(self.config, config);
@@ -42,6 +43,7 @@ var Datepicker = function () {
       var state = {
         current: value,
         value: value
+
       };
       // mount component
       var component = self._initComponent(state);
@@ -177,9 +179,23 @@ var Datepicker = function () {
       e.stopPropagation();
     }
   }, {
+    key: '_hideOnScroll',
+    value: function _hideOnScroll(e) {
+      this.hide();
+      window.removeEventListener('scroll', this._hideOnScroll);
+    }
+  }, {
+    key: '_registerScrollVanish',
+    value: function _registerScrollVanish(e) {
+      window.addEventListener('scroll', this._hideOnScroll);
+    }
+  }, {
     key: '_initComponent',
     value: function _initComponent(state) {
       var self = this;
+      if (self.config.position === "fixed") {
+        self._registerScrollVanish();
+      }
       return {
         state: state,
         oninit: function oninit(vnode) {
@@ -187,15 +203,18 @@ var Datepicker = function () {
           vnode.state.value = state.value;
         },
         oncreate: function oncreate(vnode) {
-          var inputPosition = self.config.input.getBoundingClientRect();
-          var bodyPosition = document.body.getBoundingClientRect();
-          var top = bodyPosition.top - inputPosition.top;
-          var left = bodyPosition.left - inputPosition.left;
-          var right = bodyPosition.right - inputPosition.right;
-          var bottom = bodyPosition.bottom - inputPosition.bottom;
+          vnode.dom.style.position = self.config.position;
 
-          vnode.dom.style.position = 'fixed';
-
+          var inputPosition = {
+            top: self.config.input.offsetTop,
+            left: self.config.input.offsetLeft,
+            right: self.config.input.offsetLeft + self.config.input.offsetWidth,
+            bottom: self.config.input.offsetTop + self.config.input.offsetHeight
+          };
+          var top = inputPosition.top;
+          var left = inputPosition.left;
+          var right = inputPosition.right;
+          var bottom = inputPosition.bottom;
           if (inputPosition.left < self.config.input.clientWidth) {
             vnode.dom.style.left = left + 'px';
           } else {
@@ -207,7 +226,6 @@ var Datepicker = function () {
           } else {
             vnode.dom.style.top = bottom + 'px';
           }
-
           var hide = document.addEventListener('click', self.hide(self, hide));
         },
         view: function view(vnode) {

@@ -30,6 +30,8 @@ Don't ask why I picked these ones to support because I have no idea ¯\\\_(ツ)\
 
 **format**: the [momentjs](https://momentjs.com/docs/#/displaying/format/) format for displaying the value in the input (default `DD/MM/YYYY`)
 
+**position**: (default fixed) either `absolute` or `fixed`. Represents the css position type. If fixed is used the popover will disappear on scroll. 
+
 
 ###Methods
 
