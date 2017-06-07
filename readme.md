@@ -1,10 +1,10 @@
-##Webantic Datepicker
+## Webantic Datepicker
 
 A lightweight, no-css datepicker library. 
 
 Markup generated is super-minimal and confirms to [RSCSS](http://rscss.io) guidelines for easy styling.
 
-###Usage
+### Usage
 
 Install with `npm i --save @webantic/datepicker`
 
@@ -33,7 +33,7 @@ Don't ask why I picked these ones to support because I have no idea ¯\\\_(ツ)\
 **position**: (default fixed) either `absolute` or `fixed`. Represents the css position type. If fixed is used the popover will disappear on scroll. 
 
 
-###Methods
+### Methods
 
 `hide()` hides the picker
 
