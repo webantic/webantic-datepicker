@@ -157,7 +157,7 @@ class Datepicker {
   _registerScrollVanish (e) {
     window.addEventListener('scroll', this._hideOnScroll)
   }
-s
+
   _initComponent (state) {
     const self = this
     if (self.config.position === 'fixed') {
@@ -183,9 +183,9 @@ s
         const right = inputPosition.right
         const bottom = inputPosition.bottom
         if (inputPosition.left < self.config.input.clientWidth) {
-          vnode.dom.style.left = left + 'px'
+          vnode.dom.style.left = right + 'px'
         } else {
-          vnode.dom.style.right = right + 'px'
+          vnode.dom.style.right = left + 'px'
         }
 
         if (inputPosition.bottom < self.config.input.clientHeight) {

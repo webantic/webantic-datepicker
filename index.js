@@ -193,7 +193,7 @@ var Datepicker = function () {
     key: '_initComponent',
     value: function _initComponent(state) {
       var self = this;
-      if (self.config.position === "fixed") {
+      if (self.config.position === 'fixed') {
         self._registerScrollVanish();
       }
       return {
@@ -216,9 +216,9 @@ var Datepicker = function () {
           var right = inputPosition.right;
           var bottom = inputPosition.bottom;
           if (inputPosition.left < self.config.input.clientWidth) {
-            vnode.dom.style.left = left + 'px';
+            vnode.dom.style.left = right + 'px';
           } else {
-            vnode.dom.style.right = right + 'px';
+            vnode.dom.style.right = left + 'px';
           }
 
           if (inputPosition.bottom < self.config.input.clientHeight) {
