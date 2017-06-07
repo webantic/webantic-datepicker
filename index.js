@@ -179,23 +179,64 @@ var Datepicker = function () {
       e.stopPropagation();
     }
   }, {
-    key: '_hideOnScroll',
-    value: function _hideOnScroll(e) {
-      this.hide();
-      window.removeEventListener('scroll', this._hideOnScroll);
-    }
-  }, {
     key: '_registerScrollVanish',
     value: function _registerScrollVanish(e) {
-      window.addEventListener('scroll', this._hideOnScroll);
+      var self = this;
+      var hideOnScroll = function hideOnScroll(e) {
+        m.mount(self.config.root, null);
+        self.config.input.blur();
+        window.removeEventListener('scroll', hideOnScroll, false);
+      };
+      window.addEventListener('scroll', hideOnScroll);
+    }
+  }, {
+    key: '_positionFixedly',
+    value: function _positionFixedly(vnode) {
+      var self = this;
+
+      var inputPosition = self.config.input.getBoundingClientRect();
+
+      if (inputPosition.left < self.config.input.clientWidth) {
+        vnode.dom.style.left = inputPosition.left + 'px';
+      } else {
+        vnode.dom.style.right = window.innerWidth - inputPosition.right + 'px';
+      }
+
+      if (self.config.input.getBoundingClientRect().bottom > window.innerHeight * 0.75) {
+        vnode.dom.style.bottom = window.innerHeight - inputPosition.top + 'px';
+      } else {
+        vnode.dom.style.top = inputPosition.top + 'px';
+      }
+    }
+  }, {
+    key: '_positionAbsolutely',
+    value: function _positionAbsolutely(vnode) {
+      var self = this;
+      // just in case there's no parent with a non-static position
+      document.body.style.position = 'relative';
+
+      var inputPosition = {
+        top: self.config.input.offsetTop + self.config.input.offsetHeight,
+        left: self.config.input.offsetLeft,
+        right: self.config.input.offsetParent.clientWidth - (self.config.input.offsetLeft + self.config.input.offsetWidth),
+        bottom: self.config.input.offsetParent.clientHeight - self.config.input.offsetTop
+      };
+      if (inputPosition.left < self.config.input.clientWidth) {
+        vnode.dom.style.left = inputPosition.left + 'px';
+      } else {
+        vnode.dom.style.right = inputPosition.right + 'px';
+      }
+
+      if (self.config.input.getBoundingClientRect().bottom > window.innerHeight * 0.75) {
+        vnode.dom.style.bottom = inputPosition.bottom + 'px';
+      } else {
+        vnode.dom.style.top = inputPosition.top + 'px';
+      }
     }
   }, {
     key: '_initComponent',
     value: function _initComponent(state) {
       var self = this;
-      if (self.config.position === 'fixed') {
-        self._registerScrollVanish();
-      }
       return {
         state: state,
         oninit: function oninit(vnode) {
@@ -205,27 +246,16 @@ var Datepicker = function () {
         oncreate: function oncreate(vnode) {
           vnode.dom.style.position = self.config.position;
 
-          var inputPosition = {
-            top: self.config.input.offsetTop,
-            left: self.config.input.offsetLeft,
-            right: self.config.input.offsetLeft + self.config.input.offsetWidth,
-            bottom: self.config.input.offsetTop + self.config.input.offsetHeight
-          };
-          var top = inputPosition.top;
-          var left = inputPosition.left;
-          var right = inputPosition.right;
-          var bottom = inputPosition.bottom;
-          if (inputPosition.left < self.config.input.clientWidth) {
-            vnode.dom.style.left = right + 'px';
-          } else {
-            vnode.dom.style.right = left + 'px';
+          if (self.config.position === 'fixed') {
+            self._registerScrollVanish();
           }
 
-          if (inputPosition.bottom < self.config.input.clientHeight) {
-            vnode.dom.style.bottom = top + 'px';
+          if (self.config.position === 'fixed') {
+            self._positionFixedly(vnode);
           } else {
-            vnode.dom.style.top = bottom + 'px';
+            self._positionAbsolutely(vnode);
           }
+
           var hide = document.addEventListener('click', self.hide(self, hide));
         },
         view: function view(vnode) {

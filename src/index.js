@@ -149,20 +149,60 @@ class Datepicker {
     e.stopPropagation()
   }
 
-  _hideOnScroll (e) {
-    this.hide()
-    window.removeEventListener('scroll', this._hideOnScroll)
+  _registerScrollVanish (e) {
+    const self = this
+    const hideOnScroll = function (e) {
+      m.mount(self.config.root, null)
+      self.config.input.blur()
+      window.removeEventListener('scroll', hideOnScroll, false)
+    }
+    window.addEventListener('scroll', hideOnScroll)
   }
 
-  _registerScrollVanish (e) {
-    window.addEventListener('scroll', this._hideOnScroll)
+  _positionFixedly (vnode) {
+    const self = this
+
+    const inputPosition = self.config.input.getBoundingClientRect()
+
+    if (inputPosition.left < self.config.input.clientWidth) {
+      vnode.dom.style.left = inputPosition.left + 'px'
+    } else {
+      vnode.dom.style.right = (window.innerWidth - inputPosition.right) + 'px'
+    }
+
+    if (self.config.input.getBoundingClientRect().bottom > (window.innerHeight * 0.75)) {
+      vnode.dom.style.bottom = (window.innerHeight - inputPosition.top) + 'px'
+    } else {
+      vnode.dom.style.top = inputPosition.top + 'px'
+    }
+  }
+
+  _positionAbsolutely (vnode) {
+    const self = this
+    // just in case there's no parent with a non-static position
+    document.body.style.position = 'relative'
+
+    const inputPosition = {
+      top: self.config.input.offsetTop + self.config.input.offsetHeight,
+      left: self.config.input.offsetLeft,
+      right: self.config.input.offsetParent.clientWidth - (self.config.input.offsetLeft + self.config.input.offsetWidth),
+      bottom: self.config.input.offsetParent.clientHeight - self.config.input.offsetTop
+    }
+    if (inputPosition.left < self.config.input.clientWidth) {
+      vnode.dom.style.left = inputPosition.left + 'px'
+    } else {
+      vnode.dom.style.right = inputPosition.right + 'px'
+    }
+
+    if (self.config.input.getBoundingClientRect().bottom > (window.innerHeight * 0.75)) {
+      vnode.dom.style.bottom = inputPosition.bottom + 'px'
+    } else {
+      vnode.dom.style.top = inputPosition.top + 'px'
+    }
   }
 
   _initComponent (state) {
     const self = this
-    if (self.config.position === 'fixed') {
-      self._registerScrollVanish()
-    }
     return {
       state,
       oninit(vnode) {
@@ -172,27 +212,16 @@ class Datepicker {
       oncreate(vnode) {
         vnode.dom.style.position = self.config.position
 
-        const inputPosition = {
-          top: self.config.input.offsetTop,
-          left: self.config.input.offsetLeft,
-          right: self.config.input.offsetLeft + self.config.input.offsetWidth,
-          bottom: self.config.input.offsetTop + self.config.input.offsetHeight
-        }
-        const top = inputPosition.top
-        const left = inputPosition.left
-        const right = inputPosition.right
-        const bottom = inputPosition.bottom
-        if (inputPosition.left < self.config.input.clientWidth) {
-          vnode.dom.style.left = right + 'px'
-        } else {
-          vnode.dom.style.right = left + 'px'
+        if (self.config.position === 'fixed') {
+          self._registerScrollVanish()
         }
 
-        if (inputPosition.bottom < self.config.input.clientHeight) {
-          vnode.dom.style.bottom = top + 'px'
+        if (self.config.position === 'fixed') {
+          self._positionFixedly(vnode)
         } else {
-          vnode.dom.style.top = bottom + 'px'
+          self._positionAbsolutely(vnode)
         }
+
         const hide = document.addEventListener('click', self.hide(self, hide))
       },
       view(vnode) {
