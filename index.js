@@ -27,12 +27,15 @@ var Datepicker = function () {
       return;
     }
     var self = this;
+    Datepicker.eventName = '@webantic/datepicker/opened';
 
     // default config
     self.config = {
       format: 'DD/MM/YYYY',
       locale: 'en-gb',
-      position: 'fixed'
+      position: 'fixed',
+      oneOpen: true,
+      closeOnSelect: true
       // update config
     };Object.assign(self.config, config);
     moment.locale(self.config.locale);
@@ -50,7 +53,21 @@ var Datepicker = function () {
         // mount component
       };var component = self._initComponent(state);
       m.mount(self.config.root, component);
+      self.config.root.dispatchEvent(new CustomEvent(Datepicker.eventName, {
+        detail: {
+          instance: self
+        },
+        bubbles: true
+      }));
     });
+
+    if (self.config.oneOpen) {
+      window.addEventListener(Datepicker.eventName, function (event) {
+        if (event.detail.instance !== self) {
+          m.mount(self.config.root, null);
+        }
+      });
+    }
     input.addEventListener('click', self._stopPropagation);
   }
 
@@ -63,6 +80,9 @@ var Datepicker = function () {
         self.config.input.value = newValue.format(self.config.format);
         vnode.state.value = newValue.toDate();
         self.config.input._date = newValue.toDate();
+        if (self.config.closeOnSelect) {
+          m.mount(self.config.root, null);
+        }
       };
     }
   }, {
@@ -257,7 +277,7 @@ var Datepicker = function () {
           var hide = function hide() {
             m.mount(self.config.root, null);
           };
-          return m('div', { class: 'date-picker', onclick: self._stopPropagation }, [m('span', { class: 'prev', onclick: self.decrementMonthView(vnode) }, '<'), m('span', { class: 'next', onclick: self.incrementMonthView(vnode) }, '>'), m('h2', { class: 'currentMonth' }, moment(vnode.state.current).format('MMMM YYYY')), m('div', { class: 'dates-display' }, self._renderDayHeadings(vnode).concat(self._renderDates(vnode))), m('div', { class: 'button', onclick: hide }, self.config.confirmText || 'Confirm')]);
+          return m('div', { class: 'date-picker', onclick: self._stopPropagation }, [m('span', { class: 'prev', onclick: self.decrementMonthView(vnode) }, '<'), m('span', { class: 'next', onclick: self.incrementMonthView(vnode) }, '>'), m('h2', { class: 'currentMonth' }, moment(vnode.state.current).format('MMMM YYYY')), m('div', { class: 'dates-display' }, self._renderDayHeadings(vnode).concat(self._renderDates(vnode))), self.config.closeOnSelect ? null : m('div', { class: 'button', onclick: hide }, self.config.confirmText || 'Confirm')]);
         }
       };
     }

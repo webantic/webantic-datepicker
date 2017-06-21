@@ -8,18 +8,22 @@ require('moment/locale/fr.js')
 require('moment/locale/nl.js')
 
 class Datepicker {
+
   constructor (input, config = {}) {
     if (!input) {
       console.warn('you need to pass a DOM node to Datepicker constructor')
       return
     }
     const self = this
+    Datepicker.eventName = '@webantic/datepicker/opened'
 
     // default config
     self.config = {
       format: 'DD/MM/YYYY',
       locale: 'en-gb',
-      position: 'fixed'
+      position: 'fixed',
+      oneOpen: true,
+      closeOnSelect: true
     }
     // update config
     Object.assign(self.config, config)
@@ -39,7 +43,21 @@ class Datepicker {
       // mount component
       const component = self._initComponent(state)
       m.mount(self.config.root, component)
+      self.config.root.dispatchEvent(new CustomEvent(Datepicker.eventName, {
+        detail: {
+          instance: self
+        },
+        bubbles: true
+      }))
     })
+
+    if (self.config.oneOpen) {
+      window.addEventListener(Datepicker.eventName, function (event) {
+        if (event.detail.instance !== self) {
+          m.mount(self.config.root, null)
+        }
+      })
+    }
     input.addEventListener('click', self._stopPropagation)
   }
 
@@ -50,6 +68,9 @@ class Datepicker {
       self.config.input.value = newValue.format(self.config.format)
       vnode.state.value = newValue.toDate()
       self.config.input._date = newValue.toDate()
+      if (self.config.closeOnSelect) {
+        m.mount(self.config.root, null)
+      }
     }
   }
 
@@ -227,7 +248,7 @@ class Datepicker {
           m('span', {class: 'next', onclick: self.incrementMonthView(vnode)}, '>'),
           m('h2', {class: 'currentMonth'}, moment(vnode.state.current).format('MMMM YYYY')),
           m('div', {class: 'dates-display'}, self._renderDayHeadings(vnode).concat(self._renderDates(vnode))),
-          m('div', {class: 'button', onclick: hide}, self.config.confirmText || 'Confirm')
+          self.config.closeOnSelect ? null : m('div', {class: 'button', onclick: hide}, self.config.confirmText || 'Confirm')
         ])
       }
     }
