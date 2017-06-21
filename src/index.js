@@ -1,5 +1,6 @@
 const m = require('mithril')
 const moment = require('moment')
+const { popover } = require('@webantic/util')
 require('moment/locale/en-gb')
 require('moment/locale/cs.js')
 require('moment/locale/es.js')
@@ -33,8 +34,8 @@ class Datepicker {
       let state = {
         current: value,
         value: value
-
       }
+
       // mount component
       const component = self._initComponent(state)
       m.mount(self.config.root, component)
@@ -138,7 +139,11 @@ class Datepicker {
     return !isNaN(new Date(date).getTime())
   }
   _cleanDate (date) {
-    return this._isDate(date) ? new Date(date) : new Date()
+    const momented = moment(date)
+    if (momented.isValid()) {
+      return momented
+    }
+    return new Date()
   }
   _createRoot (input) {
     const root = document.createElement('div')
@@ -161,20 +166,9 @@ class Datepicker {
 
   _positionFixedly (vnode) {
     const self = this
-
-    const inputPosition = self.config.input.getBoundingClientRect()
-
-    if (inputPosition.left < self.config.input.clientWidth) {
-      vnode.dom.style.left = inputPosition.left + 'px'
-    } else {
-      vnode.dom.style.right = (window.innerWidth - inputPosition.right) + 'px'
-    }
-
-    if (self.config.input.getBoundingClientRect().bottom > (window.innerHeight * 0.75)) {
-      vnode.dom.style.bottom = (window.innerHeight - inputPosition.top) + 'px'
-    } else {
-      vnode.dom.style.top = inputPosition.top + 'px'
-    }
+    const datePickerElement = vnode.dom
+    const inputElement = self.config.input
+    popover.positionFixed(datePickerElement, inputElement)
   }
 
   _positionAbsolutely (vnode) {
@@ -225,11 +219,15 @@ class Datepicker {
         const hide = document.addEventListener('click', self.hide(self, hide))
       },
       view(vnode) {
+        const hide = function() {
+          m.mount(self.config.root, null)
+        }
         return m('div', {class: 'date-picker', onclick: self._stopPropagation}, [
           m('span', {class: 'prev', onclick: self.decrementMonthView(vnode)}, '<'),
           m('span', {class: 'next', onclick: self.incrementMonthView(vnode)}, '>'),
           m('h2', {class: 'currentMonth'}, moment(vnode.state.current).format('MMMM YYYY')),
-          m('div', {class: 'dates-display'}, self._renderDayHeadings(vnode).concat(self._renderDates(vnode)))
+          m('div', {class: 'dates-display'}, self._renderDayHeadings(vnode).concat(self._renderDates(vnode))),
+          m('div', {class: 'button', onclick: hide}, self.config.confirmText || 'Confirm')
         ])
       }
     }

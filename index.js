@@ -6,6 +6,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var m = require('mithril');
 var moment = require('moment');
+
+var _require = require('@webantic/util'),
+    popover = _require.popover;
+
 require('moment/locale/en-gb');
 require('moment/locale/cs.js');
 require('moment/locale/es.js');
@@ -29,9 +33,8 @@ var Datepicker = function () {
       format: 'DD/MM/YYYY',
       locale: 'en-gb',
       position: 'fixed'
-    };
-    // update config
-    Object.assign(self.config, config);
+      // update config
+    };Object.assign(self.config, config);
     moment.locale(self.config.locale);
     self.config.input = input;
     self.config.root = self._createRoot(input);
@@ -44,9 +47,8 @@ var Datepicker = function () {
         current: value,
         value: value
 
-      };
-      // mount component
-      var component = self._initComponent(state);
+        // mount component
+      };var component = self._initComponent(state);
       m.mount(self.config.root, component);
     });
     input.addEventListener('click', self._stopPropagation);
@@ -164,7 +166,11 @@ var Datepicker = function () {
   }, {
     key: '_cleanDate',
     value: function _cleanDate(date) {
-      return this._isDate(date) ? new Date(date) : new Date();
+      var momented = moment(date);
+      if (momented.isValid()) {
+        return momented;
+      }
+      return new Date();
     }
   }, {
     key: '_createRoot',
@@ -193,20 +199,9 @@ var Datepicker = function () {
     key: '_positionFixedly',
     value: function _positionFixedly(vnode) {
       var self = this;
-
-      var inputPosition = self.config.input.getBoundingClientRect();
-
-      if (inputPosition.left < self.config.input.clientWidth) {
-        vnode.dom.style.left = inputPosition.left + 'px';
-      } else {
-        vnode.dom.style.right = window.innerWidth - inputPosition.right + 'px';
-      }
-
-      if (self.config.input.getBoundingClientRect().bottom > window.innerHeight * 0.75) {
-        vnode.dom.style.bottom = window.innerHeight - inputPosition.top + 'px';
-      } else {
-        vnode.dom.style.top = inputPosition.top + 'px';
-      }
+      var datePickerElement = vnode.dom;
+      var inputElement = self.config.input;
+      popover.positionFixed(datePickerElement, inputElement);
     }
   }, {
     key: '_positionAbsolutely',
@@ -259,7 +254,10 @@ var Datepicker = function () {
           var hide = document.addEventListener('click', self.hide(self, hide));
         },
         view: function view(vnode) {
-          return m('div', { class: 'date-picker', onclick: self._stopPropagation }, [m('span', { class: 'prev', onclick: self.decrementMonthView(vnode) }, '<'), m('span', { class: 'next', onclick: self.incrementMonthView(vnode) }, '>'), m('h2', { class: 'currentMonth' }, moment(vnode.state.current).format('MMMM YYYY')), m('div', { class: 'dates-display' }, self._renderDayHeadings(vnode).concat(self._renderDates(vnode)))]);
+          var hide = function hide() {
+            m.mount(self.config.root, null);
+          };
+          return m('div', { class: 'date-picker', onclick: self._stopPropagation }, [m('span', { class: 'prev', onclick: self.decrementMonthView(vnode) }, '<'), m('span', { class: 'next', onclick: self.incrementMonthView(vnode) }, '>'), m('h2', { class: 'currentMonth' }, moment(vnode.state.current).format('MMMM YYYY')), m('div', { class: 'dates-display' }, self._renderDayHeadings(vnode).concat(self._renderDates(vnode))), m('div', { class: 'button', onclick: hide }, self.config.confirmText || 'Confirm')]);
         }
       };
     }
