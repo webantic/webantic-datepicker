@@ -186,11 +186,12 @@ var Datepicker = function () {
   }, {
     key: '_cleanDate',
     value: function _cleanDate(date) {
-      var momented = moment(date);
+      var self = this;
+      var momented = moment(date, self.config.format, true);
       if (momented.isValid()) {
         return momented;
       }
-      return new Date();
+      return moment(new Date(), self.config.format, true);
     }
   }, {
     key: '_createRoot',

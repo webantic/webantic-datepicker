@@ -101,7 +101,7 @@ class Datepicker {
 
   _renderDayHeadings (vnode) {
     const self = this
-    const days = (function addDay (i = 0 , values = []) {
+    const days = (function addDay (i = 0, values = []) {
       if (i <= 6) {
         values.push(moment().weekday(i).format('dd')[0])
         return addDay.call(this, i + 1, values)
@@ -130,11 +130,10 @@ class Datepicker {
       if (i > 0) {
         values.unshift(null)
         return padDate.call(this, i - 1, ii, values)
-      }
-      else if (ii < 6) {
+      } else if (ii < 6) {
         values.push(null)
         return padDate.call(this, i, ii + 1, values)
-      }else {
+      } else {
         return values
       }
     })(moment(vnode.state.current).date(dates[0]).weekday(), moment(vnode.state.current).date(dates[dates.length - 1]).weekday())
@@ -160,11 +159,12 @@ class Datepicker {
     return !isNaN(new Date(date).getTime())
   }
   _cleanDate (date) {
-    const momented = moment(date)
+    const self = this
+    const momented = moment(date, self.config.format, true)
     if (momented.isValid()) {
       return momented
     }
-    return new Date()
+    return moment(new Date(), self.config.format, true)
   }
   _createRoot (input) {
     const root = document.createElement('div')
@@ -220,11 +220,11 @@ class Datepicker {
     const self = this
     return {
       state,
-      oninit(vnode) {
+      oninit (vnode) {
         vnode.state.current = state.current
         vnode.state.value = state.value
       },
-      oncreate(vnode) {
+      oncreate (vnode) {
         vnode.dom.style.position = self.config.position
 
         if (self.config.position === 'fixed') {
@@ -239,8 +239,8 @@ class Datepicker {
 
         const hide = document.addEventListener('click', self.hide(self, hide))
       },
-      view(vnode) {
-        const hide = function() {
+      view (vnode) {
+        const hide = function () {
           m.mount(self.config.root, null)
         }
         return m('div', {class: 'date-picker', onclick: self._stopPropagation}, [
