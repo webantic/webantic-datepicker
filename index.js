@@ -28,6 +28,7 @@ var Datepicker = function () {
     }
     var self = this;
     Datepicker.eventName = '@webantic/datepicker/opened';
+    Datepicker.openClassName = '-datepicker-open';
 
     // default config
     self.config = {
@@ -46,6 +47,7 @@ var Datepicker = function () {
     input.addEventListener('focus', function renderDatePicker(e) {
       // initial state
       var value = e.target._date ? self._cleanDate(e.target._date) : self._cleanDate(e.target.value);
+      e.target._date = value;
       var state = {
         current: value,
         value: value
@@ -59,12 +61,13 @@ var Datepicker = function () {
         },
         bubbles: true
       }));
+      self.config.input.className += " " + Datepicker.openClassName;
     });
 
     if (self.config.oneOpen) {
       window.addEventListener(Datepicker.eventName, function (event) {
         if (event.detail.instance !== self) {
-          m.mount(self.config.root, null);
+          self.close();
         }
       });
     }
@@ -72,6 +75,15 @@ var Datepicker = function () {
   }
 
   _createClass(Datepicker, [{
+    key: 'close',
+    value: function close() {
+      m.mount(this.config.root, null);
+      this.config.input.className = (this.config.input.className || '').replace(Datepicker.openClassName, '');
+      if (this.opened) {
+        this.opened.triangle.remove();
+      }
+    }
+  }, {
     key: 'selectDate',
     value: function selectDate(vnode, date) {
       var self = this;
@@ -81,7 +93,7 @@ var Datepicker = function () {
         vnode.state.value = newValue.toDate();
         self.config.input._date = newValue.toDate();
         if (self.config.closeOnSelect) {
-          m.mount(self.config.root, null);
+          self.close();
         }
       };
     }
@@ -109,7 +121,7 @@ var Datepicker = function () {
     key: 'hide',
     value: function hide(self, listener) {
       return function hideClickHandler(e) {
-        m.mount(self.config.root, null);
+        self.close();
         document.removeEventListener('click', listener);
       };
     }
@@ -210,7 +222,7 @@ var Datepicker = function () {
     value: function _registerScrollVanish(e) {
       var self = this;
       var hideOnScroll = function hideOnScroll(e) {
-        m.mount(self.config.root, null);
+        self.close();
         self.config.input.blur();
         window.removeEventListener('scroll', hideOnScroll, false);
       };
@@ -222,7 +234,9 @@ var Datepicker = function () {
       var self = this;
       var datePickerElement = vnode.dom;
       var inputElement = self.config.input;
-      popover.positionFixed(datePickerElement, inputElement);
+      self.opened = popover.positionFixed(datePickerElement, inputElement, {
+        triangle: true
+      });
     }
   }, {
     key: '_positionAbsolutely',
@@ -276,7 +290,7 @@ var Datepicker = function () {
         },
         view: function view(vnode) {
           var hide = function hide() {
-            m.mount(self.config.root, null);
+            self.close();
           };
           return m('div', { class: 'date-picker', onclick: self._stopPropagation }, [m('span', { class: 'prev', onclick: self.decrementMonthView(vnode) }, '<'), m('span', { class: 'next', onclick: self.incrementMonthView(vnode) }, '>'), m('h2', { class: 'currentMonth' }, moment(vnode.state.current).format('MMMM YYYY')), m('div', { class: 'dates-display' }, self._renderDayHeadings(vnode).concat(self._renderDates(vnode))), self.config.closeOnSelect ? null : m('div', { class: 'button', onclick: hide }, self.config.confirmText || 'Confirm')]);
         }

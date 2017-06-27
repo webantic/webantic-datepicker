@@ -16,6 +16,7 @@ class Datepicker {
     }
     const self = this
     Datepicker.eventName = '@webantic/datepicker/opened'
+    Datepicker.openClassName = '-datepicker-open'
 
     // default config
     self.config = {
@@ -35,6 +36,7 @@ class Datepicker {
     input.addEventListener('focus', function renderDatePicker (e) {
       // initial state
       let value = e.target._date ? self._cleanDate(e.target._date) : self._cleanDate(e.target.value)
+      e.target._date = value
       let state = {
         current: value,
         value: value
@@ -49,16 +51,25 @@ class Datepicker {
         },
         bubbles: true
       }))
+      self.config.input.className += " " + Datepicker.openClassName
     })
 
     if (self.config.oneOpen) {
       window.addEventListener(Datepicker.eventName, function (event) {
         if (event.detail.instance !== self) {
-          m.mount(self.config.root, null)
+          self.close()
         }
       })
     }
     input.addEventListener('click', self._stopPropagation)
+  }
+
+  close() {
+    m.mount(this.config.root, null)
+    this.config.input.className = (this.config.input.className || '').replace(Datepicker.openClassName, '')
+    if (this.opened) {
+      this.opened.triangle.remove()
+    }
   }
 
   selectDate (vnode, date) {
@@ -69,7 +80,7 @@ class Datepicker {
       vnode.state.value = newValue.toDate()
       self.config.input._date = newValue.toDate()
       if (self.config.closeOnSelect) {
-        m.mount(self.config.root, null)
+        self.close()
       }
     }
   }
@@ -94,7 +105,7 @@ class Datepicker {
 
   hide (self, listener) {
     return function hideClickHandler (e) {
-      m.mount(self.config.root, null)
+      self.close()
       document.removeEventListener('click', listener)
     }
   }
@@ -178,7 +189,7 @@ class Datepicker {
   _registerScrollVanish (e) {
     const self = this
     const hideOnScroll = function (e) {
-      m.mount(self.config.root, null)
+      self.close()
       self.config.input.blur()
       window.removeEventListener('scroll', hideOnScroll, false)
     }
@@ -189,7 +200,9 @@ class Datepicker {
     const self = this
     const datePickerElement = vnode.dom
     const inputElement = self.config.input
-    popover.positionFixed(datePickerElement, inputElement)
+    self.opened = popover.positionFixed(datePickerElement, inputElement, {
+      triangle: true
+    })
   }
 
   _positionAbsolutely (vnode) {
@@ -239,9 +252,10 @@ class Datepicker {
 
         const hide = document.addEventListener('click', self.hide(self, hide))
       },
-      view (vnode) {
-        const hide = function () {
-          m.mount(self.config.root, null)
+
+      view(vnode) {
+        const hide = function() {
+          self.close()
         }
         return m('div', {class: 'date-picker', onclick: self._stopPropagation}, [
           m('span', {class: 'prev', onclick: self.decrementMonthView(vnode)}, '<'),
