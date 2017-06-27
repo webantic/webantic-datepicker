@@ -31,11 +31,13 @@ class Datepicker {
     moment.locale(self.config.locale)
     self.config.input = input
     self.config.root = self._createRoot(input)
+    const initialValue = input._date ? self._cleanDate(input._date) : self._cleanDate(input.value)
+    input._date = initialValue.toDate()
 
     // set up show listener
     input.addEventListener('focus', function renderDatePicker (e) {
       // initial state
-      let value = e.target._date ? self._cleanDate(e.target._date) : self._cleanDate(e.target.value)
+      let value = e.target._date
       e.target._date = value
       let state = {
         current: value,

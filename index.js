@@ -42,11 +42,13 @@ var Datepicker = function () {
     moment.locale(self.config.locale);
     self.config.input = input;
     self.config.root = self._createRoot(input);
+    var initialValue = input._date ? self._cleanDate(input._date) : self._cleanDate(input.value);
+    input._date = initialValue.toDate();
 
     // set up show listener
     input.addEventListener('focus', function renderDatePicker(e) {
       // initial state
-      var value = e.target._date ? self._cleanDate(e.target._date) : self._cleanDate(e.target.value);
+      var value = e.target._date;
       e.target._date = value;
       var state = {
         current: value,
