@@ -48,7 +48,7 @@ var Datepicker = function () {
     // set up show listener
     input.addEventListener('focus', function renderDatePicker(e) {
       // initial state
-      var value = e.target._date;
+      var value = self._cleanDate(e.target.value);
       e.target._date = value;
       var state = {
         current: value,

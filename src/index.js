@@ -37,7 +37,7 @@ class Datepicker {
     // set up show listener
     input.addEventListener('focus', function renderDatePicker (e) {
       // initial state
-      let value = e.target._date
+      let value = self._cleanDate(e.target.value)
       e.target._date = value
       let state = {
         current: value,
