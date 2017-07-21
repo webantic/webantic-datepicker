@@ -38,10 +38,12 @@ class Datepicker {
     input.addEventListener('focus', function renderDatePicker (e) {
       // initial state
       let value = self._cleanDate(e.target.value)
+      const squares = self._getPaddedDates(value).length
       e.target._date = value
       let state = {
         current: value,
-        value: value
+        value: value,
+        squares
       }
 
       // mount component
@@ -53,7 +55,7 @@ class Datepicker {
         },
         bubbles: true
       }))
-      self.config.input.className += " " + Datepicker.openClassName
+      self.config.input.className += ' ' + Datepicker.openClassName
     })
 
     if (self.config.oneOpen) {
@@ -66,7 +68,7 @@ class Datepicker {
     input.addEventListener('click', self._stopPropagation)
   }
 
-  close() {
+  close () {
     m.mount(this.config.root, null)
     this.config.input.className = (this.config.input.className || '').replace(Datepicker.openClassName, '')
     if (this.opened) {
@@ -88,19 +90,25 @@ class Datepicker {
   }
 
   incrementMonthView (vnode) {
+    const self = this
+
     return function nextMonthClickHandler (e) {
       const currentMonth = moment(vnode.state.current).month()
       const newDate = moment(vnode.state.current).month(currentMonth + 1)
       vnode.state.current = newDate.toDate()
+      vnode.state.squares = self._getPaddedDates(newDate).length
       return newDate
     }
   }
 
   decrementMonthView (vnode) {
+    const self = this
+
     return function prevMonthClickHandler (e) {
       const currentMonth = moment(vnode.state.current).month()
       const newDate = moment(vnode.state.current).month(currentMonth - 1)
       vnode.state.current = newDate.toDate()
+      vnode.state.squares = self._getPaddedDates(newDate).length
       return newDate
     }
   }
@@ -113,7 +121,6 @@ class Datepicker {
   }
 
   _renderDayHeadings (vnode) {
-    const self = this
     const days = (function addDay (i = 0, values = []) {
       if (i <= 6) {
         values.push(moment().weekday(i).format('dd')[0])
@@ -127,10 +134,10 @@ class Datepicker {
     })
   }
 
-  _renderDates (vnode) {
-    const self = this
-    const daysToRender = moment(vnode.state.current).daysInMonth()
-    const dates = (function addDate (i, total, values = []) {
+  _getDates (current) {
+    const daysToRender = moment(current).daysInMonth()
+
+    return (function addDate (i, total, values = []) {
       if (i <= total) {
         values.push(i)
         return addDate.call(this, i + 1, total, values)
@@ -138,8 +145,13 @@ class Datepicker {
         return values
       }
     })(1, daysToRender)
+  }
 
-    const paddedDates = (function padDate (i, ii, values = dates) {
+  _getPaddedDates (current) {
+    const self = this
+    const dates = self._getDates(current)
+
+    return (function padDate (i, ii, values = dates) {
       if (i > 0) {
         values.unshift(null)
         return padDate.call(this, i - 1, ii, values)
@@ -149,7 +161,13 @@ class Datepicker {
       } else {
         return values
       }
-    })(moment(vnode.state.current).date(dates[0]).weekday(), moment(vnode.state.current).date(dates[dates.length - 1]).weekday())
+    })(moment(current).date(dates[0]).weekday(), moment(current).date(dates[dates.length - 1]).weekday())
+  }
+
+  _renderDates (vnode) {
+    const self = this
+
+    const paddedDates = self._getPaddedDates(vnode.state.current)
 
     return paddedDates.map(function templatifyDates (date) {
       const empty = function isEmpty () {
@@ -200,11 +218,15 @@ class Datepicker {
 
   _positionFixedly (vnode) {
     const self = this
+
     const datePickerElement = vnode.dom
     const inputElement = self.config.input
-    self.opened = popover.positionFixed(datePickerElement, inputElement, {
-      triangle: true
-    })
+    const options = {
+      triangle: true,
+      positionVariantSelector: '.month-picker'
+    }
+
+    return popover.positionFixed(datePickerElement, inputElement, options)
   }
 
   _positionAbsolutely (vnode) {
@@ -238,16 +260,17 @@ class Datepicker {
       oninit (vnode) {
         vnode.state.current = state.current
         vnode.state.value = state.value
+        vnode.state.squares = state.value
       },
       oncreate (vnode) {
         vnode.dom.style.position = self.config.position
 
         if (self.config.position === 'fixed') {
           self._registerScrollVanish()
-        }
+          vnode.state.position = self._positionFixedly(vnode).positioned || self.config.position
+          vnode.state.squareHeight = vnode.dom.querySelector('.date:not(.-empty)').clientHeight
 
-        if (self.config.position === 'fixed') {
-          self._positionFixedly(vnode)
+          m.redraw()
         } else {
           self._positionAbsolutely(vnode)
         }
@@ -255,16 +278,30 @@ class Datepicker {
         const hide = document.addEventListener('click', self.hide(self, hide))
       },
 
-      view(vnode) {
-        const hide = function() {
+      view (vnode) {
+        const hide = function () {
           self.close()
         }
-        return m('div', {class: 'date-picker', onclick: self._stopPropagation}, [
-          m('span', {class: 'prev', onclick: self.decrementMonthView(vnode)}, '<'),
-          m('span', {class: 'next', onclick: self.incrementMonthView(vnode)}, '>'),
-          m('h2', {class: 'currentMonth'}, moment(vnode.state.current).format('MMMM YYYY')),
+
+        let style = {}
+        const { squares, squareHeight, position } = vnode.state
+        if (squareHeight && squares && (squares <= 35)) {
+          style[`margin-${position}`] = squares <= 28 ? (squareHeight * 2) + 'px' : squareHeight + 'px'
+        }
+
+        function monthBarWithPositionClass (positionClass) {
+          return m('div', {class: `month-picker ${positionClass}`}, [
+            m('span', {class: 'prev', onclick: self.decrementMonthView(vnode)}, '<'),
+            m('span', {class: 'next', onclick: self.incrementMonthView(vnode)}, '>'),
+            m('h2', {class: 'currentMonth'}, moment(vnode.state.current).format('MMMM YYYY'))
+          ])
+        }
+
+        return m('div', {class: 'date-picker', style, onclick: self._stopPropagation}, [
+          monthBarWithPositionClass('-top'),
           m('div', {class: 'dates-display'}, self._renderDayHeadings(vnode).concat(self._renderDates(vnode))),
-          self.config.closeOnSelect ? null : m('div', {class: 'button', onclick: hide}, self.config.confirmText || 'Confirm')
+          self.config.closeOnSelect ? null : m('div', {class: 'button', onclick: hide}, self.config.confirmText || 'Confirm'),
+          monthBarWithPositionClass('-bottom')
         ])
       }
     }

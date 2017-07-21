@@ -49,10 +49,12 @@ var Datepicker = function () {
     input.addEventListener('focus', function renderDatePicker(e) {
       // initial state
       var value = self._cleanDate(e.target.value);
+      var squares = self._getPaddedDates(value).length;
       e.target._date = value;
       var state = {
         current: value,
-        value: value
+        value: value,
+        squares: squares
 
         // mount component
       };var component = self._initComponent(state);
@@ -63,7 +65,7 @@ var Datepicker = function () {
         },
         bubbles: true
       }));
-      self.config.input.className += " " + Datepicker.openClassName;
+      self.config.input.className += ' ' + Datepicker.openClassName;
     });
 
     if (self.config.oneOpen) {
@@ -102,20 +104,26 @@ var Datepicker = function () {
   }, {
     key: 'incrementMonthView',
     value: function incrementMonthView(vnode) {
+      var self = this;
+
       return function nextMonthClickHandler(e) {
         var currentMonth = moment(vnode.state.current).month();
         var newDate = moment(vnode.state.current).month(currentMonth + 1);
         vnode.state.current = newDate.toDate();
+        vnode.state.squares = self._getPaddedDates(newDate).length;
         return newDate;
       };
     }
   }, {
     key: 'decrementMonthView',
     value: function decrementMonthView(vnode) {
+      var self = this;
+
       return function prevMonthClickHandler(e) {
         var currentMonth = moment(vnode.state.current).month();
         var newDate = moment(vnode.state.current).month(currentMonth - 1);
         vnode.state.current = newDate.toDate();
+        vnode.state.squares = self._getPaddedDates(newDate).length;
         return newDate;
       };
     }
@@ -130,7 +138,6 @@ var Datepicker = function () {
   }, {
     key: '_renderDayHeadings',
     value: function _renderDayHeadings(vnode) {
-      var self = this;
       var days = function addDay() {
         var i = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : 0;
         var values = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
@@ -147,11 +154,11 @@ var Datepicker = function () {
       });
     }
   }, {
-    key: '_renderDates',
-    value: function _renderDates(vnode) {
-      var self = this;
-      var daysToRender = moment(vnode.state.current).daysInMonth();
-      var dates = function addDate(i, total) {
+    key: '_getDates',
+    value: function _getDates(current) {
+      var daysToRender = moment(current).daysInMonth();
+
+      return function addDate(i, total) {
         var values = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : [];
 
         if (i <= total) {
@@ -161,8 +168,14 @@ var Datepicker = function () {
           return values;
         }
       }(1, daysToRender);
+    }
+  }, {
+    key: '_getPaddedDates',
+    value: function _getPaddedDates(current) {
+      var self = this;
+      var dates = self._getDates(current);
 
-      var paddedDates = function padDate(i, ii) {
+      return function padDate(i, ii) {
         var values = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : dates;
 
         if (i > 0) {
@@ -174,7 +187,14 @@ var Datepicker = function () {
         } else {
           return values;
         }
-      }(moment(vnode.state.current).date(dates[0]).weekday(), moment(vnode.state.current).date(dates[dates.length - 1]).weekday());
+      }(moment(current).date(dates[0]).weekday(), moment(current).date(dates[dates.length - 1]).weekday());
+    }
+  }, {
+    key: '_renderDates',
+    value: function _renderDates(vnode) {
+      var self = this;
+
+      var paddedDates = self._getPaddedDates(vnode.state.current);
 
       return paddedDates.map(function templatifyDates(date) {
         var empty = function isEmpty() {
@@ -234,11 +254,15 @@ var Datepicker = function () {
     key: '_positionFixedly',
     value: function _positionFixedly(vnode) {
       var self = this;
+
       var datePickerElement = vnode.dom;
       var inputElement = self.config.input;
-      self.opened = popover.positionFixed(datePickerElement, inputElement, {
-        triangle: true
-      });
+      var options = {
+        triangle: true,
+        positionVariantSelector: '.month-picker'
+      };
+
+      return popover.positionFixed(datePickerElement, inputElement, options);
     }
   }, {
     key: '_positionAbsolutely',
@@ -274,16 +298,17 @@ var Datepicker = function () {
         oninit: function oninit(vnode) {
           vnode.state.current = state.current;
           vnode.state.value = state.value;
+          vnode.state.squares = state.value;
         },
         oncreate: function oncreate(vnode) {
           vnode.dom.style.position = self.config.position;
 
           if (self.config.position === 'fixed') {
             self._registerScrollVanish();
-          }
+            vnode.state.position = self._positionFixedly(vnode).positioned || self.config.position;
+            vnode.state.squareHeight = vnode.dom.querySelector('.date:not(.-empty)').clientHeight;
 
-          if (self.config.position === 'fixed') {
-            self._positionFixedly(vnode);
+            m.redraw();
           } else {
             self._positionAbsolutely(vnode);
           }
@@ -294,7 +319,22 @@ var Datepicker = function () {
           var hide = function hide() {
             self.close();
           };
-          return m('div', { class: 'date-picker', onclick: self._stopPropagation }, [m('span', { class: 'prev', onclick: self.decrementMonthView(vnode) }, '<'), m('span', { class: 'next', onclick: self.incrementMonthView(vnode) }, '>'), m('h2', { class: 'currentMonth' }, moment(vnode.state.current).format('MMMM YYYY')), m('div', { class: 'dates-display' }, self._renderDayHeadings(vnode).concat(self._renderDates(vnode))), self.config.closeOnSelect ? null : m('div', { class: 'button', onclick: hide }, self.config.confirmText || 'Confirm')]);
+
+          var style = {};
+          var _vnode$state = vnode.state,
+              squares = _vnode$state.squares,
+              squareHeight = _vnode$state.squareHeight,
+              position = _vnode$state.position;
+
+          if (squareHeight && squares && squares <= 35) {
+            style['margin-' + position] = squares <= 28 ? squareHeight * 2 + 'px' : squareHeight + 'px';
+          }
+
+          function monthBarWithPositionClass(positionClass) {
+            return m('div', { class: 'month-picker ' + positionClass }, [m('span', { class: 'prev', onclick: self.decrementMonthView(vnode) }, '<'), m('span', { class: 'next', onclick: self.incrementMonthView(vnode) }, '>'), m('h2', { class: 'currentMonth' }, moment(vnode.state.current).format('MMMM YYYY'))]);
+          }
+
+          return m('div', { class: 'date-picker', style: style, onclick: self._stopPropagation }, [monthBarWithPositionClass('-top'), m('div', { class: 'dates-display' }, self._renderDayHeadings(vnode).concat(self._renderDates(vnode))), self.config.closeOnSelect ? null : m('div', { class: 'button', onclick: hide }, self.config.confirmText || 'Confirm'), monthBarWithPositionClass('-bottom')]);
         }
       };
     }
