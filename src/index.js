@@ -223,7 +223,8 @@ class Datepicker {
     const inputElement = self.config.input
     const options = {
       triangle: true,
-      positionVariantSelector: '.month-picker'
+      positionVariantSelector: '.month-picker',
+      where: ['top', 'bottom']
     }
 
     return popover.positionFixed(datePickerElement, inputElement, options)
