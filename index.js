@@ -36,7 +36,8 @@ var Datepicker = function () {
       locale: 'en-gb',
       position: 'fixed',
       oneOpen: true,
-      closeOnSelect: true
+      closeOnSelect: true,
+      viewport: document
       // update config
     };Object.assign(self.config, config);
     moment.locale(self.config.locale);
@@ -243,12 +244,15 @@ var Datepicker = function () {
     key: '_registerScrollVanish',
     value: function _registerScrollVanish(e) {
       var self = this;
+
+      var viewport = self.config.viewport === document ? document : document.querySelector(self.config.viewport);
+
       var hideOnScroll = function hideOnScroll(e) {
         self.close();
         self.config.input.blur();
-        window.removeEventListener('scroll', hideOnScroll, false);
+        viewport.removeEventListener('scroll', hideOnScroll, false);
       };
-      window.addEventListener('scroll', hideOnScroll);
+      viewport.addEventListener('scroll', hideOnScroll);
     }
   }, {
     key: '_positionFixedly',

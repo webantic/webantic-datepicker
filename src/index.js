@@ -24,7 +24,8 @@ class Datepicker {
       locale: 'en-gb',
       position: 'fixed',
       oneOpen: true,
-      closeOnSelect: true
+      closeOnSelect: true,
+      viewport: document
     }
     // update config
     Object.assign(self.config, config)
@@ -208,12 +209,15 @@ class Datepicker {
 
   _registerScrollVanish (e) {
     const self = this
+
+    const viewport = self.config.viewport === document ? document : document.querySelector(self.config.viewport)
+
     const hideOnScroll = function (e) {
       self.close()
       self.config.input.blur()
-      window.removeEventListener('scroll', hideOnScroll, false)
+      viewport.removeEventListener('scroll', hideOnScroll, false)
     }
-    window.addEventListener('scroll', hideOnScroll)
+    viewport.addEventListener('scroll', hideOnScroll)
   }
 
   _positionFixedly (vnode) {
