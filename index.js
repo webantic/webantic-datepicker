@@ -37,7 +37,8 @@ var Datepicker = function () {
       position: 'fixed',
       oneOpen: true,
       closeOnSelect: true,
-      viewport: document
+      viewport: document,
+      triangle: true
       // update config
     };Object.assign(self.config, config);
     moment.locale(self.config.locale);
@@ -84,9 +85,7 @@ var Datepicker = function () {
     value: function close() {
       m.mount(this.config.root, null);
       this.config.input.className = (this.config.input.className || '').replace(Datepicker.openClassName, '');
-      if (this.opened) {
-        this.opened.triangle.remove();
-      }
+      $(this.config.root).find('.popover-triangle').remove();
     }
   }, {
     key: 'selectDate',
@@ -262,7 +261,7 @@ var Datepicker = function () {
       var datePickerElement = vnode.dom;
       var inputElement = self.config.input;
       var options = {
-        triangle: true,
+        triangle: self.config.triangle,
         positionVariantSelector: '.month-picker',
         where: ['top', 'bottom']
       };

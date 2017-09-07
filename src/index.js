@@ -8,7 +8,6 @@ require('moment/locale/fr.js')
 require('moment/locale/nl.js')
 
 class Datepicker {
-
   constructor (input, config = {}) {
     if (!input) {
       console.warn('you need to pass a DOM node to Datepicker constructor')
@@ -25,7 +24,8 @@ class Datepicker {
       position: 'fixed',
       oneOpen: true,
       closeOnSelect: true,
-      viewport: document
+      viewport: document,
+      triangle: true
     }
     // update config
     Object.assign(self.config, config)
@@ -72,9 +72,7 @@ class Datepicker {
   close () {
     m.mount(this.config.root, null)
     this.config.input.className = (this.config.input.className || '').replace(Datepicker.openClassName, '')
-    if (this.opened) {
-      this.opened.triangle.remove()
-    }
+    $(this.config.root).find('.popover-triangle').remove()
   }
 
   selectDate (vnode, date) {
@@ -226,7 +224,7 @@ class Datepicker {
     const datePickerElement = vnode.dom
     const inputElement = self.config.input
     const options = {
-      triangle: true,
+      triangle: self.config.triangle,
       positionVariantSelector: '.month-picker',
       where: ['top', 'bottom']
     }
