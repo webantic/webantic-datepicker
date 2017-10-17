@@ -94,8 +94,14 @@ var Datepicker = function () {
       return function dateSelectionClickHandler(e) {
         var newValue = moment(vnode.state.current).date(date);
         self.config.input.value = newValue.format(self.config.format);
+
         vnode.state.value = newValue.toDate();
         self.config.input._date = newValue.toDate();
+
+        // Dispatch change event to notify listeners
+        var changeEvent = new CustomEvent('change', { bubbles: true, cancelable: true });
+        self.config.input.dispatchEvent(changeEvent);
+
         if (self.config.closeOnSelect) {
           self.close();
         }
