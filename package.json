@@ -1,6 +1,6 @@
 {
   "name": "@webantic/datepicker",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "description": "A simple datepicker library",
   "main": "index.js",
   "scripts": {
@@ -23,7 +23,7 @@
   },
   "homepage": "https://github.com/webantic/webantic-datepicker#readme",
   "dependencies": {
-    "@webantic/util": "8.7.2",
+    "@webantic/util": "file:vendor/webantic-util-9.0.3.tgz",
     "mithril": "^1.1.3",
     "moment": "^2.19.3"
   },
